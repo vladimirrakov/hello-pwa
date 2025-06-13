@@ -1,0 +1,179 @@
+# Build and deploy a small Progressive Web App (PWA)
+
+*Source: GitHub Copilot*
+
+## Table of Contents
+
+- [Example: Simple PWA (“Hello, PWA!”)](#1-example-simple-pwa-hello-pwa)
+  - [Project Structure](#a-project-structure)
+  - [Source Files](#b-source-files)
+- [How to Deploy the PWA](#2-how-to-deploy-the-pwa)
+  - [Step 1: Prepare Your Files](#step-1-prepare-your-files)
+  - [Step 2: Use HTTPS](#step-2-use-https)
+  - [Step 3: Upload to a Web Host](#step-3-upload-to-a-web-host)
+    - [Option A: Static Hosting (Recommended for PWAs)](#option-a-static-hosting-recommended-for-pwas)
+    - [Option B: Your Own Web Server](#option-b-your-own-web-server)
+  - [Step 4: Verify PWA Functionality](#step-4-verify-pwa-functionality)
+  - [Step 5: Test Offline](#step-5-test-offline)
+- [Summary](#summary)
+
+Here’s a concise example of a small Progressive Web App (PWA) and a step-by-step guide on how to deploy it.
+
+---
+
+## 1. Example: Simple PWA (“Hello, PWA!”)
+
+Let’s create a minimal PWA with an installable web page that works offline.
+
+### a) Project Structure
+
+```
+/pwa-example
+  ├── index.html
+  ├── style.css
+  ├── app.js
+  ├── manifest.json
+  └── service-worker.js
+```
+
+### b) Source Files
+
+index.html
+
+```html name=index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Hello, PWA!</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Hello, PWA!</h1>
+  <p>This is a simple Progressive Web App.</p>
+  <script src="app.js"></script>
+</body>
+</html>
+```
+
+style.css
+
+```css name=style.css
+body {
+  font-family: sans-serif;
+  text-align: center;
+  margin-top: 50px;
+}
+```
+
+app.js
+
+```javascript name=app.js
+// Register the service worker if supported
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(reg => console.log('Service Worker registered', reg))
+    .catch(err => console.error('Service Worker registration failed', err));
+}
+```
+
+manifest.json
+
+```json name=manifest.json
+{
+  "name": "Hello PWA",
+  "short_name": "HelloPWA",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3367D6",
+  "icons": [
+    {
+      "src": "https://www.svgrepo.com/show/349502/pwa.svg",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+service-worker.js
+
+```javascript name=service-worker.js
+const CACHE_NAME = 'hello-pwa-cache-v1';
+const FILES_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/manifest.json'
+];
+
+// Install event: cache files
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
+  );
+});
+
+// Activate event: cleanup old caches if any
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => 
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+});
+
+// Fetch event: serve cached files when offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(
+      cached => cached || fetch(event.request)
+    )
+  );
+});
+```
+
+---
+
+## 2. How to Deploy the PWA
+
+### Step 1: Prepare Your Files
+- Place the files above in a directory, keeping the structure.
+- Ensure all files are in the web root or adjust paths in `service-worker.js` accordingly.
+
+### Step 2: Use HTTPS
+- PWAs require HTTPS (except on localhost for testing).
+- Make sure your server uses HTTPS.
+
+### Step 3: Upload to a Web Host
+
+#### **Option A: Static Hosting (Recommended for PWAs)**
+- [GitHub Pages](https://pages.github.com/)
+- [Vercel](https://vercel.com/)
+- [Netlify](https://www.netlify.com/)
+- [Firebase Hosting](https://firebase.google.com/products/hosting)
+
+#### **Option B: Your Own Web Server**
+- Upload all files to your server’s public directory.
+
+### Step 4: Verify PWA Functionality
+
+1. Open your site in Chrome, Firefox, or Edge.
+2. Check DevTools > Application tab for “Manifest” and “Service Workers”.
+3. You should see an “Install” or “Add to Home Screen” option.
+
+### Step 5: Test Offline
+
+- Turn off your network and reload the page; it should still work (served from cache).
+
+---
+
+## **Summary**
+
+- Write your PWA using the files above.
+- Host it on a secure (HTTPS) static host or server.
+- Your app is now installable and works offline!
